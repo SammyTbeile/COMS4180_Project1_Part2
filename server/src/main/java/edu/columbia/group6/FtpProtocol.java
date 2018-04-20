@@ -18,7 +18,7 @@ public class FtpProtocol {
     private int responseStatus;
 
 
-    public FtpResponse process(Scanner scanner) {
+    public FtpResponse process(Scanner scanner, String logName) {
         if (scanner.hasNextLine()) {
             String line = scanner.nextLine();
 
@@ -42,16 +42,47 @@ public class FtpProtocol {
 
             if (line.startsWith("GET ")) {
                 this.filename = line.substring(4);
+                FileWriter log = null;
+                try {
+                  log = new FileWriter(logName, true);
+                  log.write(this.filename);
+                } catch (IOException e) {
+                  System.out.println("Failed to open log file");
+                }
 
                 try {
                     FtpCommand cmd = new FtpCommand();
                     byte[] file = cmd.getFileContents(this.filename);
                     String hash = cmd.getFileHash(this.filename);
+                    if (log != null){
+                      try {
+                        log.write(": sent\n");
+                        log.close();
+                      } catch (IOException e){
+                        System.out.println("Failed to write to log file");
+                      }
+                    }
 
                     return new FtpResponse(FtpStatusCode.SUCCESS, "GET " + this.filename, new String(file, StandardCharsets.US_ASCII), hash);
                 } catch (IOException io) {
+                    if (log != null){
+                      try {
+                        log.write(": failed to send\n");
+                        log.close();
+                      } catch (IOException e){
+                        System.out.println("Failed to write to log file");
+                      }
+                    }
                     return new FtpResponse(FtpStatusCode.FILE_NOT_FOUND, "GET " + this.filename);
                 } catch (Exception io) {
+                  if (log != null){
+                    try {
+                      log.write(": failed to send\n");
+                      log.close();
+                    } catch (IOException e){
+                      System.out.println("Failed to write to log file");
+                    }
+                  }
                     return new FtpResponse(FtpStatusCode.GENERAL_ERROR, "GET " + this.filename);
                 }
             }

@@ -11,6 +11,8 @@ public class Server {
 
     private boolean run = true;
 
+    private String logName;
+
     /**
      * Main method
      *
@@ -21,6 +23,7 @@ public class Server {
         CommandLineParser cliParser = new DefaultParser();
         Options options = new Options();
         options.addOption(Option.builder().argName("p").required(true).hasArg(true).longOpt("port").build());
+        options.addOption(Option.builder().argName("l").required(true).hasArg(true).longOpt("log").build());
 
         try {
             CommandLine cli = cliParser.parse(options, args);
@@ -80,6 +83,9 @@ public class Server {
                 throw new RuntimeException("Port must be a number");
             }
         }
+        if (cli.hasOption("log")){
+          this.logName = cli.getOptionValue("log");
+        }
     }
 
     /**
@@ -93,7 +99,7 @@ public class Server {
 
             while (this.run) {
                 // Create threads so that multiple clients can connect at the same time.
-                new FtpMultiServerThread(socket.accept()).start();
+                new FtpMultiServerThread(socket.accept(), this.logName).start();
             }
         } catch (IOException e) {
             throw new RuntimeException("Error opening socket: " + e.getMessage());

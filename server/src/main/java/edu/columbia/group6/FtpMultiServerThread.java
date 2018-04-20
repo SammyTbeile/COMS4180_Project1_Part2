@@ -14,15 +14,17 @@ import java.util.Scanner;
  */
 public class FtpMultiServerThread extends Thread {
     private final Socket socket;
+    private String logName;
 
     /**
      * Constructor for the thread.
      *
      * @param socket The client socket.
      */
-    public FtpMultiServerThread(Socket socket) {
+    public FtpMultiServerThread(Socket socket, String logName) {
         super("FtpMultiServerThread");
         this.socket = socket;
+        this.logName = logName;
     }
 
     /**
@@ -38,7 +40,7 @@ public class FtpMultiServerThread extends Thread {
 
             while (true) {
                 try {
-                    FtpResponse response = proto.process(scanner);
+                    FtpResponse response = proto.process(scanner, logName);
 
                     if (!response.getStatusCode().equals(FtpStatusCode.CONTINUE)) {
                         System.out.println(response);

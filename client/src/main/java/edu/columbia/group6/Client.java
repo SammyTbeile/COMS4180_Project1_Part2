@@ -16,6 +16,7 @@ public class Client {
     // Create Socket
     private Socket clientSock;
     private Scanner scanner;
+    private FileWriter log;
 
     /**
      * Constructor to set up socket.
@@ -23,9 +24,10 @@ public class Client {
      * @param hostname
      * @param port
      */
-    public Client(String hostname, int port) {
+    public Client(String hostname, int port, String logName) {
         try {
             clientSock = new Socket(hostname, port);
+            log = new FileWriter(logName, true);
         } catch (IOException e) {
             System.err.println("Unable to open socket to server.");
             System.exit(1);
@@ -43,14 +45,16 @@ public class Client {
         Scanner scan = new Scanner(System.in);
 
         //Check for valid args and format
-        if (args.length != 2) {
-            System.out.println("Usage: client ip-address port");
+        if (args.length != 3) {
+            System.out.println("Usage: client ip-address port log file");
             System.exit(1);
         }
 
         //Assign args to variables
         String hostname = args[0];
         String sPort = args[1];
+        String logName = args[2];
+
         int port = Integer.parseInt(sPort);
 
 
@@ -61,7 +65,7 @@ public class Client {
         checkIP(ip);
         checkPort(port);
 
-        Client client = new Client(ip, port);
+        Client client = new Client(ip, port, logName);
         client.dispatch();
     }
 
@@ -79,16 +83,33 @@ public class Client {
 
                 try {
                     this.clientSock.close();
+                    this.log.close();
                     System.exit(0);
                 } catch (IOException e) {
                     System.err.println("Unable to close socket.");
                 }
             } else {
+
                 if (line.startsWith("get ")) {
+                    try {
+                      this.log.write(line + ": ");
+                    } catch (IOException e){
+                      System.out.println("Failed to write to log");
+                    }
                     this.get(line);
                 } else if (line.startsWith("put ")) {
+                    try {
+                      this.log.write(line + ": ");
+                    } catch (IOException e){
+                      System.out.println("Failed to write to log");
+                    }
                     this.put(line);
                 } else if (line.equals("ls")) {
+                    try {
+                      this.log.write(line + ": ");
+                    } catch (IOException e){
+                      System.out.println("Failed to write to log");
+                    }
                     this.LS();
                 }
             }
@@ -173,6 +194,13 @@ public class Client {
                 } else if (newlinePos == 3) {
                     // The content.
                     System.out.println(response);
+                    try {
+                      this.log.write("Received");
+                      this.log.write(System.getProperty("line.separator"));
+                    } catch (IOException e){
+                      System.out.println("Failed to write to log");
+                    }
+
                 }
             }
         } catch (IOException e) {
@@ -229,6 +257,12 @@ public class Client {
                 switch (response) {
                     case "250":
                         System.out.println("File successfully uploaded and saved.");
+                        try{
+                          this.log.write("Uploaded");
+                          this.log.write(System.getProperty("line.separator"));
+                        } catch (IOException e) {
+                          System.out.println("Failed to write to log file");
+                        }
                         break;
                     case "501":
                         System.err.println("The server encountered an error when uploading the data.");
@@ -296,8 +330,13 @@ public class Client {
                     String digest = new DigestUtils(SHA_256).digestAsHex(Base64.decodeBase64(response));
                     if (hash.equals(digest)) {
                         Path file = Paths.get(filename);
+
                         Files.write(file, Base64.decodeBase64(response));
                         System.out.println("The file was successfully saved.");
+                        System.out.println("Response was of size: " + response.length());
+                        System.out.println("Decoded this has a length of: " + Base64.decodeBase64(response).length);
+                        this.log.write("Received");
+                        this.log.write(System.getProperty("line.separator"));
                     } else {
                         System.err.println("The received data does not match the sent hash!");
                     }

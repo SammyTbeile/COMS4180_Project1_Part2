@@ -1,0 +1,6 @@
+ls: Received
+get test.txt: Received
+ls: Received
+put test.txt: Uploaded
+get test.txt: Received
+get test.txt: Received

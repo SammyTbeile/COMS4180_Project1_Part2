@@ -60,6 +60,8 @@ public class FtpCommand {
             Files.write(file, Base64.decodeBase64(content));
 
             System.err.println("wrote data");
+            System.out.println("Before decoding the data was of size: " + content.length);
+            System.out.println("After decoding the fe saved was of size: " + Base64.decodeBase64(content).length);
 
             FileHashes fh = new FileHashes();
             fh.addFile(filename, hash);
